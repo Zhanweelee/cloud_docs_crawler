@@ -89,7 +89,8 @@ def save_page_as_pdf(url):
         # 从侧边栏菜单，找到子页面 URL
         main_content = soup.find('div', {'id': 'pc-markdown-container'})
         if main_content:
-            sub_urls = main_content.find_all('ul')
+            directory_div = main_content.find('div', {'class': 'directory'})
+            sub_urls = directory_div.find_all('ul') if directory_div else []
             sub_urls = [a for ul in sub_urls for a in ul.find_all('a')]
         else:
             sub_urls = []
