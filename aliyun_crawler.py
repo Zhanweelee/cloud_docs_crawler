@@ -6,7 +6,15 @@ import re
 from urllib.parse import urljoin
 import argparse
 
+# 输出目录
 OUTPUT_DIR = 'output'
+
+# 待处理 URL 列表
+PENDING_URL_LIST = []
+
+# 已处理 URL 列表
+PROCESSED_URL_LIST = []
+
 
 def get_menu_links(url):
     """获取菜单中的所有链接"""
@@ -14,6 +22,11 @@ def get_menu_links(url):
         response = requests.get(url)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
+
+        # 输出 html 内容
+        filename = os.path.join(OUTPUT_DIR, "html", "root.html")
+        with open(filename, "w", encoding="utf-8") as f:
+            f.write(response.text)
         
         # 找到id为common-menu-container的ul标签
         menu_container = soup.find('ul', {'id': 'common-menu-container'})
@@ -65,6 +78,19 @@ def save_page_as_pdf(url):
 
         print(f"页面标题: {title}")
         print(f"页面HTML: {response.text}")
+
+        # 从侧边栏菜单，找到子页面 URL
+        main_content = soup.find('div', {'id': 'pc-markdown-container'})
+        if main_content:
+            sub_urls = main_content.find_all('ul')
+            sub_urls = [a for ul in sub_urls for a in ul.find_all('a')]
+        else:
+            sub_urls = []
+        for sub_url in sub_urls:
+            href = sub_url.get('href')
+            if href:
+                sub_url = urljoin(url, href)
+                PENDING_URL_LIST.append(sub_url)
         
         # 找到主要内容区域
         main_content = soup.find('div', {'id': 'pc-markdown-container'})
@@ -73,9 +99,11 @@ def save_page_as_pdf(url):
             return
         
         # 创建临时HTML文件
-        temp_html = 'temp.html'
+        temp_html = os.path.join(OUTPUT_DIR, "temp.html")
+        # 创建完整的HTML结构
+        temp_content = f"""<!DOCTYPE html><html lang="zh"><head><meta charset="UTF-8"/><title>{title}</title></head><body>{str(main_content)}</body></html>"""
         with open(temp_html, 'w', encoding='utf-8') as f:
-            f.write(str(main_content))
+            f.write(temp_content)
         
         # 转换为PDF
         pdfkit.from_file(temp_html, filename)
@@ -96,11 +124,14 @@ def main():
     print("正在获取菜单链接...")
     links = get_menu_links(args.url)
     print(f"找到 {len(links)} 个链接")
-    
+    PENDING_URL_LIST.extend(links)
+
     # 处理每个链接
-    for i, link in enumerate(links, 1):
-        print(f"正在处理第 {i}/{len(links)} 个页面: {link}")
+    while PENDING_URL_LIST:
+        link = PENDING_URL_LIST.pop(0)
+        print(f"正在处理页面: {link}")
         save_page_as_pdf(link)
+        PROCESSED_URL_LIST.append(link)
 
 if __name__ == '__main__':
     main() 
