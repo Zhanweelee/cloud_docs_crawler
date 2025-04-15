@@ -46,8 +46,18 @@ def save_page_as_pdf(url):
         # 获取页面标题
         title = soup.find('title').text.strip()
         # 清理文件名中的非法字符
+
         filename = os.path.join(OUTPUT_DIR, "pdf", re.sub(r'[\\/*?:"<>|]', '_', title) + '.pdf')
+        # 创建 Pdf 输出目录
+        if not os.path.exists(OUTPUT_DIR):
+            os.makedirs(OUTPUT_DIR)
+        if not os.path.exists(os.path.join(OUTPUT_DIR, "pdf")):
+            os.makedirs(os.path.join(OUTPUT_DIR, "pdf"))
+
+        # 创建 Html 输出目录
         html_filename = os.path.join(OUTPUT_DIR, "html", re.sub(r'[\\/*?:"<>|]', '_', title) + '.html')
+        if not os.path.exists(os.path.join(OUTPUT_DIR, "html")):
+            os.makedirs(os.path.join(OUTPUT_DIR, "html"))
 
         with open(html_filename, 'w', encoding='utf-8') as f:
             f.write(response.text)
