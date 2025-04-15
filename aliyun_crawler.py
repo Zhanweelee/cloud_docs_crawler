@@ -58,19 +58,22 @@ def save_page_as_pdf(url):
         
         # 获取页面标题
         title = soup.find('title').text.strip()
-        # 清理文件名中的非法字符
 
-        filename = os.path.join(OUTPUT_DIR, "pdf", re.sub(r'[\\/*?:"<>|]', '_', title) + '.pdf')
+        # URL Example: https://help.aliyun.com/zh/cs/product-overview/product-billing-rules
+        # 获取 URL 结构，不包含域名，取最后一个 / 后面的内容
+        url_path = url.split('/')[1:-1]
+        dir_sub_path = '/'.join(url_path)
+
+        # 清理文件名中的非法字符
+        filename = os.path.join(OUTPUT_DIR, "pdf", dir_sub_path, re.sub(r'[\\/*?:"<>|]', '_', title) + '.pdf')
         # 创建 Pdf 输出目录
-        if not os.path.exists(OUTPUT_DIR):
-            os.makedirs(OUTPUT_DIR)
-        if not os.path.exists(os.path.join(OUTPUT_DIR, "pdf")):
-            os.makedirs(os.path.join(OUTPUT_DIR, "pdf"))
+        if not os.path.exists(os.path.join(OUTPUT_DIR, "pdf", dir_sub_path)):
+            os.makedirs(os.path.join(OUTPUT_DIR, "pdf", dir_sub_path))
 
         # 创建 Html 输出目录
-        html_filename = os.path.join(OUTPUT_DIR, "html", re.sub(r'[\\/*?:"<>|]', '_', title) + '.html')
-        if not os.path.exists(os.path.join(OUTPUT_DIR, "html")):
-            os.makedirs(os.path.join(OUTPUT_DIR, "html"))
+        html_filename = os.path.join(OUTPUT_DIR, "html", dir_sub_path, re.sub(r'[\\/*?:"<>|]', '_', title) + '.html')
+        if not os.path.exists(os.path.join(OUTPUT_DIR, "html", dir_sub_path)):
+            os.makedirs(os.path.join(OUTPUT_DIR, "html", dir_sub_path))
 
         with open(html_filename, 'w', encoding='utf-8') as f:
             f.write(response.text)
@@ -129,6 +132,8 @@ def main():
     # 处理每个链接
     while PENDING_URL_LIST:
         link = PENDING_URL_LIST.pop(0)
+        if link in PROCESSED_URL_LIST:
+            continue
         print(f"正在处理页面: {link}")
         save_page_as_pdf(link)
         PROCESSED_URL_LIST.append(link)
