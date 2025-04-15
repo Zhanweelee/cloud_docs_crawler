@@ -5,6 +5,7 @@ import os
 import re
 from urllib.parse import urljoin
 import argparse
+from urllib.parse import urlparse
 
 # 输出目录
 OUTPUT_DIR = 'output'
@@ -25,6 +26,8 @@ def get_menu_links(url):
 
         # 输出 html 内容
         filename = os.path.join(OUTPUT_DIR, "html", "root.html")
+        if not os.path.exists(os.path.join(OUTPUT_DIR, "html")):
+            os.makedirs(os.path.join(OUTPUT_DIR, "html"))
         with open(filename, "w", encoding="utf-8") as f:
             f.write(response.text)
         
@@ -61,11 +64,12 @@ def save_page_as_pdf(url):
 
         # URL Example: https://help.aliyun.com/zh/cs/product-overview/product-billing-rules
         # 获取 URL 结构，不包含域名，取最后一个 / 后面的内容
-        url_path = url.split('/')[1:-1]
-        dir_sub_path = '/'.join(url_path)
+        url_path = urlparse(url).path.split('/')[:-1]
+        dir_sub_path = '/'.join([f for f in url_path if len(f.strip()) > 0])
 
         # 清理文件名中的非法字符
         filename = os.path.join(OUTPUT_DIR, "pdf", dir_sub_path, re.sub(r'[\\/*?:"<>|]', '_', title) + '.pdf')
+        print(f"保存 PDF 文件: {OUTPUT_DIR}, {dir_sub_path}, {filename}")
         # 创建 Pdf 输出目录
         if not os.path.exists(os.path.join(OUTPUT_DIR, "pdf", dir_sub_path)):
             os.makedirs(os.path.join(OUTPUT_DIR, "pdf", dir_sub_path))
