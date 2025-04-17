@@ -84,7 +84,7 @@ def save_page_as_pdf(url):
         print(f"已保存: {html_filename}")
 
         print(f"页面标题: {title}")
-        print(f"页面HTML: {response.text}")
+        # print(f"页面HTML: {response.text}")
 
         # 从侧边栏菜单，找到子页面 URL
         main_content = soup.find('div', {'id': 'pc-markdown-container'})
